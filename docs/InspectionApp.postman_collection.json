@@ -1,0 +1,1226 @@
+{
+  "info": {
+    "name": "Inspection App API",
+    "_postman_id": "inspection-app-v1",
+    "description": "Complete REST API collection for the Warehouse Inspection Application.\n\n**How to use**\n1. Import this collection into Postman.\n2. Set the `baseUrl` variable to your server (default: `http://localhost:8080`).\n3. Run **Auth / Login** first — the test script automatically saves the JWT to the `token` variable.\n4. All subsequent requests inherit Bearer authentication from the collection level.\n5. Create requests (POST) auto-save the new resource `id` into the matching variable (e.g. `warehouseId`) so downstream requests are pre-filled.\n\n**Execution order for a clean environment**\n```\nAuth/Login → Users/Create → Warehouses/Create → Locations/Create\n  → Articles/Create → Inspections/Create → Damage Reports/Create\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl",        "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",          "value": "",                      "type": "string" },
+    { "key": "userId",         "value": "1",                     "type": "string" },
+    { "key": "warehouseId",    "value": "1",                     "type": "string" },
+    { "key": "locationId",     "value": "1",                     "type": "string" },
+    { "key": "articleId",      "value": "1",                     "type": "string" },
+    { "key": "inspectionId",   "value": "1",                     "type": "string" },
+    { "key": "damageReportId", "value": "1",                     "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Health",
+      "description": "Public liveness probe — no authentication required.",
+      "item": [
+        {
+          "name": "GET Health check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            },
+            "description": "Returns the application status.\n\n**Expected response — 200 OK**\n```json\n{\n  \"status\": \"UP\",\n  \"message\": \"Inspection App Backend is running\"\n}\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Application is UP', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.equal('UP');",
+                  "    pm.expect(json).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints. The login request is the only public entry point of the API that returns a JWT.",
+      "item": [
+        {
+          "name": "POST Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@1234\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Authenticates a user and returns a signed JWT.\nThe test script automatically saves the token into the `token` collection variable.\n\n**Expected response — 200 OK**\n```json\n{\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9...\",\n  \"type\": \"Bearer\",\n  \"username\": \"admin\",\n  \"role\": \"ADMIN\"\n}\n```\n\n**Failure — 401 Unauthorized** (wrong credentials)\n```json\n{\n  \"status\": 401,\n  \"message\": \"Bad credentials\",\n  \"timestamp\": \"2026-07-24T10:00:00Z\"\n}\n```\n\n**Failure — 400 Bad Request** (missing or blank fields)\n```json\n{\n  \"status\": 400,\n  \"message\": \"Validation failed\",\n  \"errors\": [\"Username is required\"]\n}\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('JWT token returned and saved', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('token');",
+                  "    pm.expect(json.type).to.equal('Bearer');",
+                  "    pm.expect(json).to.have.property('username');",
+                  "    pm.expect(json).to.have.property('role');",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token saved for user:', json.username, '| Role:', json.role);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Login — wrong password (expect 401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrongpassword\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Negative test: wrong password must return 401.\n\n**Expected response — 401 Unauthorized**\n```json\n{\n  \"status\": 401,\n  \"message\": \"Bad credentials\",\n  \"timestamp\": \"...\"\n}\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Users",
+      "description": "CRUD for user accounts. Requires `ADMIN` role for mutating operations in a production setup (enforced at the service layer).",
+      "item": [
+        {
+          "name": "GET All users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Returns all users as a list.\n\n**Expected response — 200 OK**\n```json\n[\n  {\n    \"id\": 1,\n    \"username\": \"admin\",\n    \"email\": \"admin@example.com\",\n    \"fullName\": \"System Admin\",\n    \"role\": \"ADMIN\",\n    \"createdAt\": \"2026-07-24T10:00:00Z\",\n    \"updatedAt\": \"2026-07-24T10:00:00Z\"\n  }\n]\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET All users filtered by role",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users?role=INSPECTOR",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"],
+              "query": [{ "key": "role", "value": "INSPECTOR" }]
+            },
+            "description": "Filters users by role. Accepted values: `ADMIN`, `INSPECTOR`.\n\n**Expected response — 200 OK** — subset of users array matching the given role."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('All users have correct role', () => {",
+                  "    pm.response.json().forEach(u => pm.expect(u.role).to.equal('INSPECTOR'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            },
+            "description": "Fetch a single user by their database ID.\n\n**Expected response — 200 OK**\n```json\n{\n  \"id\": 1,\n  \"username\": \"admin\",\n  \"email\": \"admin@example.com\",\n  \"fullName\": \"System Admin\",\n  \"role\": \"ADMIN\",\n  \"createdAt\": \"2026-07-24T10:00:00Z\",\n  \"updatedAt\": \"2026-07-24T10:00:00Z\"\n}\n```\n\n**Failure — 404 Not Found** if the ID does not exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has expected fields', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.all.keys('id','username','email','fullName','role','createdAt','updatedAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@example.com\",\n  \"fullName\": \"John Doe\",\n  \"role\": \"INSPECTOR\",\n  \"password\": \"Inspector@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a new user. The password is hashed with BCrypt before storage — it is never returned in any response.\n\n**Validation rules**\n- `username`: required, max 50 chars, only letters/digits/dots/hyphens/underscores\n- `email`: required, valid RFC 5322 format, max 100 chars\n- `fullName`: required, max 100 chars\n- `role`: required enum — `ADMIN` or `INSPECTOR`\n- `password`: required, 8–100 chars\n\n**Expected response — 201 Created**\n```json\n{\n  \"id\": 2,\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@example.com\",\n  \"fullName\": \"John Doe\",\n  \"role\": \"INSPECTOR\",\n  \"createdAt\": \"2026-07-24T10:00:00Z\",\n  \"updatedAt\": \"2026-07-24T10:00:00Z\"\n}\n```\n\n**Failure — 409 Conflict** if username or email already exists.\n**Failure — 400 Bad Request** if validation fails."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('User created and ID saved', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.not.have.property('password');",
+                  "    pm.collectionVariables.set('userId', json.id.toString());",
+                  "    console.log('Created userId:', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Update user",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"John D. Updated\",\n  \"email\": \"john.updated@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Partial update — only the fields included in the request body are applied. Omitted fields are left unchanged.\n\n**Expected response — 200 OK** — the full updated `UserResponse`.\n\n**Failure — 404 Not Found** if the ID does not exist.\n**Failure — 409 Conflict** if the new email/username is already taken."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Full name updated', () => {",
+                  "    pm.expect(pm.response.json().fullName).to.equal('John D. Updated');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE User",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}"]
+            },
+            "description": "Permanently deletes a user.\n\n**Expected response — 204 No Content** — empty body.\n\n**Failure — 404 Not Found** if the ID does not exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Body is empty', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Warehouses",
+      "description": "Warehouse master data. The `code` field is the immutable business key used in barcodes and integrations.",
+      "item": [
+        {
+          "name": "GET All warehouses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/warehouses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "warehouses"]
+            },
+            "description": "Returns all warehouses.\n\n**Expected response — 200 OK**\n```json\n[\n  {\n    \"id\": 1,\n    \"code\": \"WH-001\",\n    \"name\": \"Main Warehouse\",\n    \"address\": \"123 Industrial Ave\",\n    \"createdAt\": \"...\",\n    \"updatedAt\": \"...\"\n  }\n]\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Warehouses filtered by name",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/warehouses?name=Main",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "warehouses"],
+              "query": [{ "key": "name", "value": "Main" }]
+            },
+            "description": "Case-insensitive substring search on the warehouse name.\n\n**Expected response — 200 OK** — subset of warehouses whose name contains the query string."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Warehouse by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/warehouses/{{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "warehouses", "{{warehouseId}}"]
+            },
+            "description": "Fetch a warehouse by its database ID.\n\n**Expected response — 200 OK** — single `WarehouseResponse`.\n\n**Failure — 404 Not Found** if the ID does not exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Has required fields', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.all.keys('id','code','name','address','createdAt','updatedAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create warehouse",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/warehouses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "warehouses"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WH-001\",\n  \"name\": \"Main Warehouse\",\n  \"address\": \"123 Industrial Ave, Cairo\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a new warehouse.\n\n**Validation rules**\n- `code`: required, max 50 chars, alphanumeric + hyphens/underscores/dots, must start with letter or digit\n- `name`: required, max 100 chars\n- `address`: optional; if provided, must be 1–255 chars (not blank)\n\n**Expected response — 201 Created** — the created `WarehouseResponse`.\n\n**Failure — 409 Conflict** if the code already exists."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Warehouse ID saved', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.collectionVariables.set('warehouseId', json.id.toString());",
+                  "    console.log('Created warehouseId:', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Update warehouse",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/warehouses/{{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "warehouses", "{{warehouseId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Warehouse (Updated)\",\n  \"address\": \"456 Logistics Park, Cairo\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Partially updates a warehouse. The `code` is immutable.\n\n**Expected response — 200 OK** — updated `WarehouseResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Name updated', () => {",
+                  "    pm.expect(pm.response.json().name).to.equal('Main Warehouse (Updated)');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Warehouse",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/warehouses/{{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "warehouses", "{{warehouseId}}"]
+            },
+            "description": "Permanently deletes a warehouse and all its locations (cascade).\n\n**Expected response — 204 No Content** — empty body."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Locations",
+      "description": "Aisle/shelf/bay locations within a warehouse. `warehouseId` is required for listing; the composite key (code + warehouseId) is unique.",
+      "item": [
+        {
+          "name": "GET Locations by warehouse",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "locations"],
+              "query": [{ "key": "warehouseId", "value": "{{warehouseId}}" }]
+            },
+            "description": "Lists all locations belonging to a specific warehouse. The `warehouseId` query parameter is **required** — omitting it returns `400 Bad Request`.\n\n**Expected response — 200 OK**\n```json\n[\n  {\n    \"id\": 1,\n    \"code\": \"AISLE-A1\",\n    \"description\": \"Electronics shelf\",\n    \"warehouseId\": 1,\n    \"warehouseCode\": \"WH-001\",\n    \"createdAt\": \"...\",\n    \"updatedAt\": \"...\"\n  }\n]\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('All locations belong to requested warehouse', () => {",
+                  "    const warehouseId = parseInt(pm.collectionVariables.get('warehouseId'));",
+                  "    pm.response.json().forEach(loc => pm.expect(loc.warehouseId).to.equal(warehouseId));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Locations — missing warehouseId (expect 400)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "locations"]
+            },
+            "description": "Negative test: omitting the required `warehouseId` must return 400.\n\n**Expected response — 400 Bad Request**"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Location by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations/{{locationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "locations", "{{locationId}}"]
+            },
+            "description": "Fetch a single location by database ID.\n\n**Expected response — 200 OK** — single `LocationResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Has warehouseId field', () => pm.expect(pm.response.json()).to.have.property('warehouseId'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create location",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "locations"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"AISLE-A1\",\n  \"description\": \"Electronics shelf — row A, column 1\",\n  \"warehouseId\": {{warehouseId}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a location inside a warehouse.\n\n**Validation rules**\n- `code`: required, max 50 chars, alphanumeric + hyphens/underscores/dots\n- `description`: optional, max 255 chars\n- `warehouseId`: required, must reference an existing warehouse\n\n**Expected response — 201 Created** — the created `LocationResponse`.\n\n**Failure — 409 Conflict** if the same code already exists in this warehouse."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Location ID saved', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('locationId', json.id.toString());",
+                  "    console.log('Created locationId:', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Update location",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations/{{locationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "locations", "{{locationId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"AISLE-A2\",\n  \"description\": \"Updated — Electronics shelf row A, column 2\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Partially updates a location. The parent warehouse is immutable.\n\n**Expected response — 200 OK** — updated `LocationResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Location",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/locations/{{locationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "locations", "{{locationId}}"]
+            },
+            "description": "Permanently deletes a location.\n\n**Expected response — 204 No Content**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Articles",
+      "description": "Inventory article master data. The `code` field is the immutable SKU/EAN barcode.",
+      "item": [
+        {
+          "name": "GET All articles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/articles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "articles"]
+            },
+            "description": "Returns all articles.\n\n**Expected response — 200 OK** — array of `ArticleResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Articles — full-text search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/articles?q=laptop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "articles"],
+              "query": [{ "key": "q", "value": "laptop" }]
+            },
+            "description": "Case-insensitive search across both `code` and `name` fields.\n\n**Expected response — 200 OK** — filtered array."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Article by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/articles/{{articleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "articles", "{{articleId}}"]
+            },
+            "description": "Fetch a single article by database ID.\n\n**Expected response — 200 OK** — single `ArticleResponse`.\n\n**Failure — 404 Not Found**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Has code and name', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('code');",
+                  "    pm.expect(json).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create article",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/articles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "articles"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SKU-LT-001\",\n  \"name\": \"Laptop 15-inch\",\n  \"description\": \"Standard office laptop — 15 inch display, 16 GB RAM\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates an article with a unique barcode/SKU code.\n\n**Validation rules**\n- `code`: required, max 50 chars, must start with a letter or digit, alphanumeric + hyphens/underscores/dots only (barcode-safe)\n- `name`: required, max 100 chars\n- `description`: optional, max 500 chars\n\n**Expected response — 201 Created** — the created `ArticleResponse`.\n\n**Failure — 409 Conflict** if the code already exists."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Article ID saved', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('articleId', json.id.toString());",
+                  "    console.log('Created articleId:', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Update article",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/articles/{{articleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "articles", "{{articleId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laptop 15-inch (Renewed)\",\n  \"description\": \"Refurbished office laptop — 15 inch, 32 GB RAM\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Updates the article display name and description. The `code` (SKU) is immutable.\n\n**Expected response — 200 OK** — updated `ArticleResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Article",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/articles/{{articleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "articles", "{{articleId}}"]
+            },
+            "description": "Permanently deletes an article.\n\n**Expected response — 204 No Content**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Inspections",
+      "description": "Warehouse inspection lifecycle management. Supports filtering by warehouse, inspector, and status. Includes a dedicated PATCH endpoint for status transitions.",
+      "item": [
+        {
+          "name": "GET All inspections",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections"]
+            },
+            "description": "Returns all inspections without filters.\n\n**Expected response — 200 OK** — array of `InspectionResponse`.\n\nEach item includes denormalised fields (`warehouseCode`, `inspectorName`, `damageReportCount`) for list views."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Inspections filtered by warehouse",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections?warehouseId={{warehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections"],
+              "query": [{ "key": "warehouseId", "value": "{{warehouseId}}" }]
+            },
+            "description": "Returns inspections for a specific warehouse.\n\n**Expected response — 200 OK** — filtered array."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Inspections filtered by inspector",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections?inspectorId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections"],
+              "query": [{ "key": "inspectorId", "value": "{{userId}}" }]
+            },
+            "description": "Returns all inspections assigned to a specific inspector.\n\n**Expected response — 200 OK** — filtered array."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Inspections filtered by status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections?status=PLANNED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections"],
+              "query": [{ "key": "status", "value": "PLANNED" }]
+            },
+            "description": "Returns inspections in the given status. Accepted values: `PLANNED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`.\n\n**Expected response — 200 OK** — filtered array."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('All results have PLANNED status', () => {",
+                  "    pm.response.json().forEach(i => pm.expect(i.status).to.equal('PLANNED'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Inspection by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections/{{inspectionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections", "{{inspectionId}}"]
+            },
+            "description": "Fetch a single inspection with full detail.\n\n**Expected response — 200 OK**\n```json\n{\n  \"id\": 1,\n  \"inspectionCode\": \"INSP-2026-001\",\n  \"warehouseId\": 1,\n  \"warehouseCode\": \"WH-001\",\n  \"inspectorId\": 2,\n  \"inspectorName\": \"John Doe\",\n  \"status\": \"PLANNED\",\n  \"scheduledDate\": \"2026-08-01\",\n  \"notes\": \"Annual audit\",\n  \"damageReportCount\": 0,\n  \"createdAt\": \"...\",\n  \"updatedAt\": \"...\"\n}\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Has required fields', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('inspectionCode');",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json).to.have.property('damageReportCount');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create inspection",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inspectionCode\": \"INSP-2026-001\",\n  \"warehouseId\": {{warehouseId}},\n  \"inspectorId\": {{userId}},\n  \"scheduledDate\": \"2026-08-15\",\n  \"notes\": \"Annual physical inventory audit\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a new inspection in `PLANNED` status.\n\n**Validation rules**\n- `inspectionCode`: required, globally unique, alphanumeric + hyphens/underscores/dots\n- `warehouseId`: required, must exist\n- `inspectorId`: required, must exist and have `INSPECTOR` or `ADMIN` role\n- `scheduledDate`: required, must be today or in the future (`@FutureOrPresent`)\n- `notes`: optional, max 500 chars\n\n**Expected response — 201 Created** — the created `InspectionResponse`.\n\n**Failure — 409 Conflict** if `inspectionCode` already exists.\n**Failure — 400 Bad Request** if `scheduledDate` is in the past."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Inspection ID saved and status is PLANNED', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.equal('PLANNED');",
+                  "    pm.collectionVariables.set('inspectionId', json.id.toString());",
+                  "    console.log('Created inspectionId:', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Update inspection",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections/{{inspectionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections", "{{inspectionId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledDate\": \"2026-09-01\",\n  \"notes\": \"Rescheduled — original date conflicted with public holiday\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Partially updates an inspection. `inspectionCode`, `warehouseId`, and `inspectorId` are immutable.\n\n**Expected response — 200 OK** — updated `InspectionResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update inspection status",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections/{{inspectionId}}/status?status=IN_PROGRESS",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections", "{{inspectionId}}", "status"],
+              "query": [{ "key": "status", "value": "IN_PROGRESS" }]
+            },
+            "description": "Dedicated status transition endpoint. Keeps status changes separate from data updates.\n\n**Accepted status values**: `PLANNED` → `IN_PROGRESS` → `COMPLETED` or `CANCELLED`\n\n**Expected response — 200 OK** — `InspectionResponse` with the new status.\n\n**Failure — 404 Not Found** if the inspection does not exist."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Status updated to IN_PROGRESS', () => {",
+                  "    pm.expect(pm.response.json().status).to.equal('IN_PROGRESS');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Inspection",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inspections/{{inspectionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inspections", "{{inspectionId}}"]
+            },
+            "description": "Permanently deletes an inspection and all its damage reports (cascade).\n\n**Expected response — 204 No Content**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Damage Reports",
+      "description": "Damage observations recorded during an inspection. Either `inspectionId` or `articleId` is required to list — omitting both returns 400.",
+      "item": [
+        {
+          "name": "GET Damage reports by inspection",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports?inspectionId={{inspectionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports"],
+              "query": [{ "key": "inspectionId", "value": "{{inspectionId}}" }]
+            },
+            "description": "Returns all damage reports for a given inspection.\n\n**Expected response — 200 OK**\n```json\n[\n  {\n    \"id\": 1,\n    \"inspectionId\": 1,\n    \"inspectionCode\": \"INSP-2026-001\",\n    \"articleId\": 1,\n    \"articleCode\": \"SKU-LT-001\",\n    \"articleName\": \"Laptop 15-inch\",\n    \"locationId\": 1,\n    \"locationCode\": \"AISLE-A1\",\n    \"severity\": \"MEDIUM\",\n    \"description\": \"Screen cracked\",\n    \"photoUrl\": null,\n    \"createdAt\": \"...\",\n    \"updatedAt\": \"...\"\n  }\n]\n```"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Damage reports by article",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports?articleId={{articleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports"],
+              "query": [{ "key": "articleId", "value": "{{articleId}}" }]
+            },
+            "description": "Returns all damage reports for a given article across all inspections — useful for damage history per item.\n\n**Expected response — 200 OK** — array of `DamageReportResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Damage reports — missing filter (expect 400)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports"]
+            },
+            "description": "Negative test: omitting both `inspectionId` and `articleId` must return 400.\n\n**Expected response — 400 Bad Request**"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Damage report by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports/{{damageReportId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports", "{{damageReportId}}"]
+            },
+            "description": "Fetch a single damage report.\n\n**Expected response — 200 OK** — single `DamageReportResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Has severity field', () => pm.expect(pm.response.json()).to.have.property('severity'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create damage report",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inspectionId\": {{inspectionId}},\n  \"articleId\": {{articleId}},\n  \"locationId\": {{locationId}},\n  \"severity\": \"MEDIUM\",\n  \"description\": \"Screen has a 3cm crack on the lower-left corner. Device powers on but display is partially obscured.\",\n  \"photoUrl\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Records a damage observation. All three FK references are immutable after creation.\n\n**Validation rules**\n- `inspectionId`, `articleId`, `locationId`: all required and must exist in the database\n- `severity`: required enum — `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`\n- `description`: required, max 1000 chars\n- `photoUrl`: optional, max 500 chars\n\n**Expected response — 201 Created** — the created `DamageReportResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Damage report ID saved', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('damageReportId', json.id.toString());",
+                  "    console.log('Created damageReportId:', json.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT Update damage report",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports/{{damageReportId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports", "{{damageReportId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"severity\": \"HIGH\",\n  \"description\": \"Screen cracked — device no longer powers on. Marked for disposal.\",\n  \"photoUrl\": \"https://storage.example.com/photos/damage-001.jpg\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Updates the mutable observation fields. The inspection, article, and location are immutable.\n\n**Expected response — 200 OK** — updated `DamageReportResponse`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Severity updated to HIGH', () => {",
+                  "    pm.expect(pm.response.json().severity).to.equal('HIGH');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Damage report",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/damage-reports/{{damageReportId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "damage-reports", "{{damageReportId}}"]
+            },
+            "description": "Permanently deletes a damage report.\n\n**Expected response — 204 No Content**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}
