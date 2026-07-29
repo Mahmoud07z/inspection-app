@@ -1,0 +1,25 @@
+name: inspection_app
+description: "Warehouse Inspection mobile application — Flutter frontend for the Inspection App REST API."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1     # State management — AsyncNotifier + Provider
+  go_router: ^14.2.7            # Declarative routing with auth guard
+  dio: ^5.4.3+1                 # HTTP client with interceptor support
+  flutter_secure_storage: ^9.2.2 # OS keychain for JWT persistence
+  intl: ^0.19.0                 # DateFormat utilities
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
