@@ -9,12 +9,36 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+<<<<<<< HEAD
   flutter_riverpod: ^2.5.1     # State management — AsyncNotifier + Provider
   go_router: ^14.2.7            # Declarative routing with auth guard
   dio: ^5.4.3+1                 # HTTP client with interceptor support
   flutter_secure_storage: ^9.2.2 # OS keychain for JWT persistence
   intl: ^0.19.0                 # DateFormat utilities
   cupertino_icons: ^1.0.8
+=======
+
+  # ── State Management ──────────────────────────────────────────
+  # Riverpod: compile-safe, testable, no BuildContext needed for providers.
+  # AsyncNotifier handles loading / error / data states out of the box.
+  flutter_riverpod: ^2.5.1
+
+  # ── Navigation ────────────────────────────────────────────────
+  # Declarative router with deep-link and redirect (auth guard) support.
+  go_router: ^14.2.7
+
+  # ── Networking ────────────────────────────────────────────────
+  # Dio: interceptors for JWT injection and typed error normalisation.
+  dio: ^5.4.3+1
+
+  # ── Secure Storage ────────────────────────────────────────────
+  # OS keychain / keystore — used to persist the JWT between sessions.
+  flutter_secure_storage: ^9.2.2
+
+  # ── Utilities ─────────────────────────────────────────────────
+  intl: ^0.19.0            # Date/time formatting (DateFormat, Intl)
+  cupertino_icons: ^1.0.8  # iOS-style icon set
+>>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
 
 dev_dependencies:
   flutter_test:

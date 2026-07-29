@@ -5,6 +5,10 @@ linter:
     - avoid_print
     - prefer_const_constructors
     - prefer_const_literals_to_create_immutables
+<<<<<<< HEAD
+=======
+    - sort_child_properties_last
+>>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
     - use_super_parameters
     - prefer_single_quotes
     - always_use_package_imports
