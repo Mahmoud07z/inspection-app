@@ -8,12 +8,14 @@ import java.time.LocalDate;
 public record InspectionResponse(
 	Long id,
 	String inspectionCode,
-	String warehouseCode,
-	String inspectorName,
-	InspectionStatus status,
-	LocalDate scheduledDate,
-	String notes,
-	Instant createdAt,
-	Instant updatedAt
-) {
-}
+        Long warehouseId,
+        String warehouseCode,
+        Long inspectorId,
+        String inspectorName,
+        InspectionStatus status,
+        LocalDate scheduledDate,
+        String notes,
+        int damageReportCount,
+        Instant createdAt,
+        Instant updatedAt
+) {}
