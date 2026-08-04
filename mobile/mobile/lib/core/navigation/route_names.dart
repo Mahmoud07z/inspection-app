@@ -14,7 +14,7 @@ abstract final class RouteNames {
 /// Using constants instead of raw strings prevents typos and enables
 /// IDE-assisted refactoring. Every [GoRoute.path] and every [context.go()]
 /// call must reference these — never use a raw string.
-abstract final class RouteNames {
+final class RouteNames {
   static const String login           = '/login';
   static const String dashboard       = '/';
   static const String warehouses      = '/warehouses';

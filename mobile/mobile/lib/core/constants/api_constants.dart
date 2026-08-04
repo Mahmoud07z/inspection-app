@@ -29,7 +29,7 @@ abstract final class ApiConstants {
 /// On iOS simulators, use `127.0.0.1`.
 /// Override [baseUrl] via a compile-time define for staging/production:
 ///   flutter run --dart-define=API_BASE_URL=https://api.example.com
-abstract final class ApiConstants {
+final class ApiConstants {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:8080',

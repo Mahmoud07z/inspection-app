@@ -7,7 +7,7 @@ abstract final class AppColors {
 =======
 /// Single source of truth for the app colour palette.
 /// Always reference these constants in widgets — never hard-code hex values.
-abstract final class AppColors {
+final class AppColors {
   // ── Brand ─────────────────────────────────────────────────────
   static const Color primary      = Color(0xFF1565C0); // Blue 800
   static const Color primaryLight = Color(0xFF1E88E5); // Blue 600

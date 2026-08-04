@@ -8,7 +8,7 @@ abstract final class AppTheme {
 /// Factory that produces [ThemeData] for both light and dark modes.
 /// Every visual decision (radius, elevation, colour scheme, component defaults)
 /// lives here so that widgets stay theme-agnostic.
-abstract final class AppTheme {
+final class AppTheme {
   static const double _radius = 12.0;
 >>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
 

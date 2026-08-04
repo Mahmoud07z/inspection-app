@@ -1,0 +1,39 @@
+# ─── Maven build output ───────────────────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ─── Flutter / Dart build output ──────────────────────────────────────────────
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart
+*.freezed.dart
+
+# ─── IDE files ────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ─── OS artefacts ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Environment / secrets ────────────────────────────────────────────────────
+*.env
+.env
+.env.*
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+
+# ─── Java / Spring ────────────────────────────────────────────────────────────
+*.class
+hs_err_pid*.log
+
+# ─── Node / npm (in case any tooling is added) ────────────────────────────────
+node_modules/

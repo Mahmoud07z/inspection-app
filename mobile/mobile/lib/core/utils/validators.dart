@@ -7,7 +7,7 @@ abstract final class Validators {
 ///
 /// Each function returns `null` on success or a non-null error message on failure,
 /// matching the signature expected by [TextFormField.validator].
-abstract final class Validators {
+final class Validators {
   // ── Username ──────────────────────────────────────────────────
 >>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
   static String? username(String? v) {

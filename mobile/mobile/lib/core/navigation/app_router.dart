@@ -146,11 +146,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteNames.damageReports,
-        builder: (_, __) => const DamageReportsScreen(),
+        builder: (_, __) => DamageReportsScreen(),
       ),
       GoRoute(
-        path: RouteNames.users,
-        builder: (_, __) => const UsersScreen(),
+        path = RouteNames.users,
+        builder = (_, __) => const UsersScreen(),
       ),
 >>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
     ],
