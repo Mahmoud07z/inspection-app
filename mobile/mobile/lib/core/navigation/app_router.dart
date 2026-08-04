@@ -14,34 +14,6 @@ import 'package:inspection_app/features/users/screens/users_screen.dart';
 import 'package:inspection_app/features/warehouses/screens/warehouse_detail_screen.dart';
 import 'package:inspection_app/features/warehouses/screens/warehouses_screen.dart';
 
-<<<<<<< HEAD
-/// Bridges Riverpod auth state to GoRouter's refreshListenable.
-/// When auth changes, GoRouter re-evaluates [redirect] without rebuilding
-/// the entire router tree.
-class _RouterRefresh extends ChangeNotifier {
-  _RouterRefresh(Ref ref) {
-    ref.listen<AsyncValue<dynamic>>(authProvider, (_, __) => notifyListeners());
-  }
-}
-
-final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: RouteNames.dashboard,
-    debugLogDiagnostics: true,
-    refreshListenable: _RouterRefresh(ref),
-    redirect: (_, state) {
-      final auth = ref.read(authProvider);
-      if (auth.isLoading) return null;
-      final loggedIn  = auth.valueOrNull?.token != null;
-      final onLogin   = state.matchedLocation == RouteNames.login;
-      if (!loggedIn && !onLogin) return RouteNames.login;
-      if (loggedIn  &&  onLogin) return RouteNames.dashboard;
-      return null;
-    },
-    routes: [
-      GoRoute(path: RouteNames.login,     builder: (_, __) => const LoginScreen()),
-      GoRoute(path: RouteNames.dashboard, builder: (_, __) => const DashboardScreen()),
-=======
 /// Bridges Riverpod's [authProvider] async state to GoRouter's
 /// [refreshListenable] mechanism.
 ///
@@ -94,21 +66,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.dashboard,
         builder: (_, __) => const DashboardScreen(),
       ),
->>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
       GoRoute(
         path: RouteNames.warehouses,
         builder: (_, __) => const WarehousesScreen(),
         routes: [
           GoRoute(
             path: ':id',
-<<<<<<< HEAD
-            builder: (_, s) => WarehouseDetailScreen(id: int.parse(s.pathParameters['id']!)),
-          ),
-        ],
-      ),
-      GoRoute(path: RouteNames.locations,     builder: (_, __) => const LocationsScreen()),
-      GoRoute(path: RouteNames.articles,      builder: (_, __) => const ArticlesScreen()),
-=======
             builder: (_, state) => WarehouseDetailScreen(
               id: int.parse(state.pathParameters['id']!),
             ),
@@ -123,36 +86,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RouteNames.articles,
         builder: (_, __) => const ArticlesScreen(),
       ),
->>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
       GoRoute(
         path: RouteNames.inspections,
         builder: (_, __) => const InspectionsScreen(),
         routes: [
           GoRoute(
             path: ':id',
-<<<<<<< HEAD
-            builder: (_, s) => InspectionDetailScreen(id: int.parse(s.pathParameters['id']!)),
-          ),
-        ],
-      ),
-      GoRoute(path: RouteNames.damageReports, builder: (_, __) => const DamageReportsScreen()),
-      GoRoute(path: RouteNames.users,         builder: (_, __) => const UsersScreen()),
-=======
             builder: (_, state) => InspectionDetailScreen(
               id: int.parse(state.pathParameters['id']!),
             ),
+            routes: [
+              GoRoute(
+                path: 'damage-reports',
+                builder: (_, state) => DamageReportsScreen(
+                  inspectionId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+            ],
           ),
         ],
       ),
       GoRoute(
         path: RouteNames.damageReports,
-        builder: (_, __) => DamageReportsScreen(),
+        builder: (_, state) {
+          final idStr = state.uri.queryParameters['inspectionId'];
+          return DamageReportsScreen(inspectionId: idStr != null ? int.parse(idStr) : 0);
+        },
       ),
       GoRoute(
-        path = RouteNames.users,
-        builder = (_, __) => const UsersScreen(),
+        path: RouteNames.users,
+        builder: (_, __) => const UsersScreen(),
       ),
->>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
     ],
   );
 });

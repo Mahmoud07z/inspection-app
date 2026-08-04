@@ -8,26 +8,17 @@ final authServiceProvider = Provider<AuthService>(
   (ref) => AuthService(ref.read(apiServiceProvider)),
 );
 
-<<<<<<< HEAD
-=======
 /// Calls the authentication endpoint and returns a [JwtResponse].
 /// Any error is propagated as a typed [ApiError] by [ApiService]'s interceptor.
->>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
 class AuthService {
   AuthService(this._api);
   final ApiService _api;
 
-<<<<<<< HEAD
-  Future<JwtResponse> login(LoginRequest req) async {
-    final res = await _api.client.post(ApiConstants.login, data: req.toJson());
-    return JwtResponse.fromJson(res.data as Map<String, dynamic>);
-=======
   Future<JwtResponse> login(LoginRequest request) async {
     final response = await _api.client.post(
       ApiConstants.login,
       data: request.toJson(),
     );
     return JwtResponse.fromJson(response.data as Map<String, dynamic>);
->>>>>>> 38d35ecc504df7aefda47e8dab5325df5dc5f1a1
   }
 }
