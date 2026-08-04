@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@SuppressWarnings({"null", "java:S1192"})
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

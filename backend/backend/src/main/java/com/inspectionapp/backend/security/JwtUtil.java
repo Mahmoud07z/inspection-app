@@ -35,6 +35,7 @@ import java.util.function.Function;
  * The secret configured in {@code app.jwt.secret} must decode to at least
  * 32 bytes (256 bits) to satisfy the HMAC-SHA256 minimum key length.
  */
+@SuppressWarnings("null")
 @Component
 public class JwtUtil {
 

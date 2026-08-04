@@ -25,6 +25,7 @@ import java.util.List;
  * on {@code code} (useful when scanning a barcode) OR a partial, case-insensitive
  * match on {@code name} (useful in free-text search boxes).
  */
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -1,7 +1,6 @@
 package com.inspectionapp.backend.entity;
 
 // Jakarta Persistence — the standard JPA API (replaces javax.persistence in Jakarta EE 9+)
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

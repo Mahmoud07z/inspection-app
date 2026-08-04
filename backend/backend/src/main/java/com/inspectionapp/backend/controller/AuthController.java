@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
  *       handled by {@link com.inspectionapp.backend.exception.GlobalExceptionHandler}).</li>
  * </ol>
  */
+@SuppressWarnings("null")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor

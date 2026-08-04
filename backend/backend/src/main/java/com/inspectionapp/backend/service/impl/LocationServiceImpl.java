@@ -29,6 +29,7 @@ import java.util.List;
  * because all service methods run within a transaction and Hibernate will
  * lazy-load the proxy on first access.
  */
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

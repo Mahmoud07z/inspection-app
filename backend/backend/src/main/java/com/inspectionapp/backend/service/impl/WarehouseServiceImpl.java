@@ -24,6 +24,7 @@ import java.util.List;
  * <p>Deleting a warehouse cascades to its Locations through the
  * {@code Warehouse.locations} mapping (CascadeType.ALL + orphanRemoval = true).
  */
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -37,6 +37,7 @@ import java.util.List;
  * explicit {@link #deleteDamageReport(Long)} method is provided for cases where
  * an individual report must be removed without touching the parent inspection.
  */
+@SuppressWarnings("null")
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -6,13 +6,10 @@ final inspectionsProvider =
     AsyncNotifierProvider<InspectionsNotifier, List<Inspection>>(InspectionsNotifier.new);
 
 class InspectionsNotifier extends AsyncNotifier<List<Inspection>> {
-  String? _statusFilter;
-
   @override
   Future<List<Inspection>> build() => ref.read(inspectionServiceProvider).getAll();
 
   Future<void> filter({int? warehouseId, int? inspectorId, String? status}) async {
-    _statusFilter = status;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => ref
         .read(inspectionServiceProvider)

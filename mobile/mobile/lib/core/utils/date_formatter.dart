@@ -5,24 +5,24 @@ import 'package:intl/intl.dart';
 /// The backend stores timestamps as ISO-8601 UTC strings ([Instant]).
 /// All display methods convert to the device's local time zone.
 abstract final class DateFormatter {
-  final _date         = DateFormat('MMM d, yyyy');
-  final _dateTime     = DateFormat('MMM d, yyyy  HH:mm');
-  final _apiDateFormat = DateFormat('yyyy-MM-dd');
+  static final _date         = DateFormat('MMM d, yyyy');
+  static final _dateTime     = DateFormat('MMM d, yyyy  HH:mm');
+  static final _apiDateFormat = DateFormat('yyyy-MM-dd');
 
   /// e.g. "Jul 24, 2026"
-  String display(DateTime dt) => _date.format(dt.toLocal());
+  static String display(DateTime dt) => _date.format(dt.toLocal());
 
   /// e.g. "Jul 24, 2026  14:30"
-  String displayWithTime(DateTime dt) => _dateTime.format(dt.toLocal());
+  static String displayWithTime(DateTime dt) => _dateTime.format(dt.toLocal());
 
   /// Formats a [DateTime] as `yyyy-MM-dd` for the REST API body.
-  String toApiDate(DateTime dt) => _apiDateFormat.format(dt);
+  static String toApiDate(DateTime dt) => _apiDateFormat.format(dt);
 
   /// Parses an ISO-8601 string from the API into a [DateTime].
-  DateTime fromIso(String iso) => DateTime.parse(iso);
+  static DateTime fromIso(String iso) => DateTime.parse(iso);
 
   /// Returns a human-readable relative string, e.g. "3d ago" or "just now".
-  String relative(DateTime dt) {
+  static String relative(DateTime dt) {
     final diff = DateTime.now().difference(dt.toLocal());
     if (diff.inDays > 30)  return _date.format(dt.toLocal());
     if (diff.inDays  > 0)  return '${diff.inDays}d ago';
