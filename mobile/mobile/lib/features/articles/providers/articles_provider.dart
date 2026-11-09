@@ -20,6 +20,14 @@ class ArticlesNotifier extends AsyncNotifier<List<Article>> {
     state = AsyncData([...?state.valueOrNull, a]);
   }
 
+  Future<void> updateItem(int id, Map<String, dynamic> body) async {
+    final updated = await ref.read(articleServiceProvider).update(id, body);
+    state = AsyncData(state.valueOrNull
+            ?.map((article) => article.id == id ? updated : article)
+            .toList() ??
+        [updated]);
+  }
+
   Future<void> remove(int id) async {
     await ref.read(articleServiceProvider).delete(id);
     state = AsyncData(state.valueOrNull?.where((a) => a.id != id).toList() ?? []);

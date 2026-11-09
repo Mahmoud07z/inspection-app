@@ -17,6 +17,14 @@ class DamageReportsNotifier extends FamilyAsyncNotifier<List<DamageReport>, int>
     state = AsyncData([...?state.valueOrNull, r]);
   }
 
+  Future<void> updateItem(int id, Map<String, dynamic> body) async {
+    final updated = await ref.read(damageReportServiceProvider).update(id, body);
+    state = AsyncData(state.valueOrNull
+            ?.map((report) => report.id == id ? updated : report)
+            .toList() ??
+        [updated]);
+  }
+
   Future<void> remove(int id) async {
     await ref.read(damageReportServiceProvider).delete(id);
     state = AsyncData(state.valueOrNull?.where((d) => d.id != id).toList() ?? []);

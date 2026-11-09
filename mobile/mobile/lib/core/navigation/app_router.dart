@@ -80,7 +80,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteNames.locations,
-        builder: (_, __) => const LocationsScreen(),
+        builder: (_, state) => LocationsScreen(
+          warehouseId: int.tryParse(state.uri.queryParameters['warehouseId'] ?? ''),
+        ),
       ),
       GoRoute(
         path: RouteNames.articles,

@@ -20,6 +20,14 @@ class WarehousesNotifier extends AsyncNotifier<List<Warehouse>> {
     state = AsyncData([...?state.valueOrNull, w]);
   }
 
+  Future<void> updateItem(int id, Map<String, dynamic> body) async {
+    final updated = await ref.read(warehouseServiceProvider).update(id, body);
+    state = AsyncData(state.valueOrNull
+            ?.map((warehouse) => warehouse.id == id ? updated : warehouse)
+            .toList() ??
+        [updated]);
+  }
+
   Future<void> remove(int id) async {
     await ref.read(warehouseServiceProvider).delete(id);
     state = AsyncData(state.valueOrNull?.where((w) => w.id != id).toList() ?? []);

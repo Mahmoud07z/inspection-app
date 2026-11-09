@@ -17,6 +17,14 @@ class LocationsNotifier extends FamilyAsyncNotifier<List<Location>, int> {
     state = AsyncData([...?state.valueOrNull, l]);
   }
 
+  Future<void> updateItem(int id, Map<String, dynamic> body) async {
+    final updated = await ref.read(locationServiceProvider).update(id, body);
+    state = AsyncData(state.valueOrNull
+            ?.map((location) => location.id == id ? updated : location)
+            .toList() ??
+        [updated]);
+  }
+
   Future<void> remove(int id) async {
     await ref.read(locationServiceProvider).delete(id);
     state = AsyncData(state.valueOrNull?.where((l) => l.id != id).toList() ?? []);

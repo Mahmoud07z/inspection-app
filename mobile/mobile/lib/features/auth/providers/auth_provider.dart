@@ -18,6 +18,12 @@ class AuthNotifier extends AsyncNotifier<JwtResponse?> {
   /// On first build, attempt to restore a token persisted from the previous session.
   @override
   Future<JwtResponse?> build() async {
+    ref.listen<bool>(sessionExpiredProvider, (_, expired) {
+      if (!expired) return;
+      ref.read(sessionExpiredProvider.notifier).state = false;
+      ref.read(apiServiceProvider).deleteToken();
+      state = const AsyncData(null);
+    });
     final token = await ref.read(apiServiceProvider).readToken();
     if (token == null) return null;
     // Reconstruct a minimal JwtResponse from the persisted token.

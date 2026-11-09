@@ -7,7 +7,15 @@ import 'package:inspection_app/shared/models/api_error.dart';
 const _kTokenKey = 'jwt_token';
 
 /// Provides the [ApiService] singleton to the Riverpod tree.
-final apiServiceProvider = Provider<ApiService>((_) => ApiService._());
+final sessionExpiredProvider = StateProvider<bool>((_) => false);
+
+final apiServiceProvider = Provider<ApiService>((ref) {
+  final service = ApiService._();
+  service.onUnauthorized = () {
+    ref.read(sessionExpiredProvider.notifier).state = true;
+  };
+  return service;
+});
 
 /// Shared Dio-based HTTP client used by every feature service.
 ///
@@ -32,12 +40,13 @@ class ApiService {
     );
     _dio.interceptors.addAll([
       _JwtInterceptor(_storage),
-      _ErrorInterceptor(),
+      _ErrorInterceptor(() => onUnauthorized?.call()),
     ]);
   }
 
   late final Dio _dio;
   final _storage = const FlutterSecureStorage();
+  void Function()? onUnauthorized;
 
   /// Exposes the Dio client to feature services.
   Dio get client => _dio;
@@ -67,8 +76,12 @@ class _JwtInterceptor extends Interceptor {
 
 /// Converts a [DioException] with a known error body into a typed [ApiError].
 class _ErrorInterceptor extends Interceptor {
+  _ErrorInterceptor(this._onUnauthorized);
+  final void Function() _onUnauthorized;
+
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    if (err.response?.statusCode == 401) _onUnauthorized();
     final data = err.response?.data;
     if (data is Map<String, dynamic>) {
       handler.reject(

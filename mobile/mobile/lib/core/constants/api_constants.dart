@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Central home for every URL constant used by feature services.
 /// Changing the base URL or a path here automatically propagates to all callers.
 ///
@@ -6,10 +8,14 @@
 /// Override [baseUrl] via a compile-time define for staging/production:
 ///   flutter run --dart-define=API_BASE_URL=https://api.example.com
 final class ApiConstants {
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8090',
-  );
+  static const String _configuredBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+  static String get baseUrl {
+    if (_configuredBaseUrl.isNotEmpty) return _configuredBaseUrl;
+    if (kIsWeb) return 'http://localhost:8090';
+    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8090';
+    return 'http://127.0.0.1:8090';
+  }
 
   // ── Auth ──────────────────────────────────────────────────────
   static const String login = '/api/v1/auth/login';

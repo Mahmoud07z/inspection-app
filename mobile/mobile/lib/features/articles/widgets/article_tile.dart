@@ -2,19 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:inspection_app/features/articles/models/article.dart';
 
 class ArticleTile extends StatelessWidget {
-  const ArticleTile({super.key, required this.article, this.onTap});
+  const ArticleTile(
+      {super.key,
+      required this.article,
+      this.onTap,
+      this.onEdit,
+      this.onDelete});
   final Article article;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) => ListTile(
-    leading: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1565C0)),
-    title: Text(article.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-    subtitle: Text(article.code,
-        style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.grey)),
-    trailing: article.description != null
-        ? Icon(Icons.info_outline, size: 18, color: Colors.grey[400])
-        : null,
-    onTap: onTap,
-  );
+        leading: Icon(Icons.inventory_2_outlined,
+            color: Theme.of(context).colorScheme.primary),
+        title: Text(article.name,
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(article.code,
+            style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        trailing: PopupMenuButton<String>(
+          onSelected: (action) =>
+              action == 'edit' ? onEdit?.call() : onDelete?.call(),
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'edit', child: Text('Edit')),
+            PopupMenuItem(value: 'delete', child: Text('Delete')),
+          ],
+        ),
+        onTap: onTap,
+      );
 }

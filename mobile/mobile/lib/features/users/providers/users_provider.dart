@@ -15,6 +15,19 @@ class UsersNotifier extends AsyncNotifier<List<AppUser>> {
         ref.read(userServiceProvider).getAll(role: role));
   }
 
+  Future<void> add(Map<String, dynamic> body) async {
+    final user = await ref.read(userServiceProvider).create(body);
+    state = AsyncData([...?state.valueOrNull, user]);
+  }
+
+  Future<void> updateItem(int id, Map<String, dynamic> body) async {
+    final updated = await ref.read(userServiceProvider).update(id, body);
+    state = AsyncData(state.valueOrNull
+            ?.map((user) => user.id == id ? updated : user)
+            .toList() ??
+        [updated]);
+  }
+
   Future<void> remove(int id) async {
     await ref.read(userServiceProvider).delete(id);
     state = AsyncData(state.valueOrNull?.where((u) => u.id != id).toList() ?? []);

@@ -16,6 +16,20 @@ class InspectionsNotifier extends AsyncNotifier<List<Inspection>> {
         .getAll(warehouseId: warehouseId, inspectorId: inspectorId, status: status));
   }
 
+  Future<Inspection> add(Map<String, dynamic> body) async {
+    final inspection = await ref.read(inspectionServiceProvider).create(body);
+    state = AsyncData([...?state.valueOrNull, inspection]);
+    return inspection;
+  }
+
+  Future<void> updateItem(int id, Map<String, dynamic> body) async {
+    final updated = await ref.read(inspectionServiceProvider).update(id, body);
+    state = AsyncData(state.valueOrNull
+            ?.map((inspection) => inspection.id == id ? updated : inspection)
+            .toList() ??
+        [updated]);
+  }
+
   Future<void> transitionStatus(int id, String status) async {
     final updated = await ref.read(inspectionServiceProvider).updateStatus(id, status);
     state = AsyncData(
